@@ -89,13 +89,6 @@ Locate the bind address settings:
 
 Enter the `Addresses` from the `[Interfaces]` section of your WireGuard config.
 
-You may also want to enable and configure these to prevent brute force intrusion attempts:
-
-```
-    "anti-brute-force-enabled": false,
-    "anti-brute-force-threshold": 100,
-```
-
 Finally, bring the pod back up, start the nginx NodePort service, and check for errors with the following commands: 
 
 ```
