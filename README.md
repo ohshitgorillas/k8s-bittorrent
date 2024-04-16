@@ -1,6 +1,6 @@
 # k8s-bittorrent
 
-The following are instructions for setting up Bittorrent in Kubernetes. This project uses
+The following are instructions for setting up BitTorrent in Kubernetes. This project uses
 * A simple WireGuard container for VPN encryption
 * Transmission, as it has the most available GUI programs for remote access.
 * nginx to provide encrypted remote access
@@ -9,8 +9,8 @@ The following are instructions for setting up Bittorrent in Kubernetes. This pro
 
 Prerequisites:
 * VPN provider that supports WireGuard, and a forwarded port
-* Kubernetes cluster with the ability to set unsafe sysctls on the node
-* wireguard-tools installed on the node's host system
+* A Kubernetes cluster with the ability to set unsafe sysctls on the node
+* `wireguard-tools` installed on the node's host system
 * Keel (https://keel.sh/docs/1)
 * A private k8s registry for Transmission's liveness probe (https://www.linuxtechi.com/setup-private-docker-registry-kubernetes/)
 
@@ -59,7 +59,7 @@ NDIwNjkK
 Enter the base64 values into `secrets_transmission.yaml` and run `kubectl apply -f secrets_transmission.yaml`. 
 
 
-4. To build the Transmission liveness server into your private registry, cd into the `liveserver` directory and execute the following commands:
+4. To build the Transmission liveness server into your private registry, cd into the `liveserver/` directory and execute the following commands:
 
 ```
 chmod +x proxy.py
@@ -72,8 +72,8 @@ docker push <registry IP:port>/transmission-liveness-server
 5. Edit the deployment manifest `deployment_bittorrent.yaml`. Specifically, pay attention to:
 * node name
 * timezone
-* registry node IP:port in transmission-liveness-server image
-* volume host paths (leave /lib/modules but edit the rest for your system)
+* `<registry node IP>:<port>` in transmission-liveness-server image
+* volume host paths (leave `/lib/modules` but edit the rest for your system)
 
 
 6. If you already have a Transmission config file from a previous setup, open it. Otherwise, execute `kubectl apply -f deployment_bittorrent.yaml` then `kubectl delete deployment bittorrent` and edit the file `transmission/config/settings.json`. Locate the bind address settings:
@@ -83,9 +83,10 @@ docker push <registry IP:port>/transmission-liveness-server
     "bind-address-ipv6": "::",
 ```
 
-Enter the addresses from the `[Interfaces]` section of your WireGuard config. This prevents Transmission from communicating with the internet outside of your WireGuard tunnel. Bring the pod back up, and start its RPC port service, with `kubectl apply -f deployment_bittorrent.yaml -f service_transmission.yaml` and check for errors with 
+Enter the addresses from the `[Interfaces]` section of your WireGuard config. This prevents Transmission from communicating with the internet outside of your WireGuard tunnel. Bring the pod back up, and start its RPC port service, then check for errors with the following commands: 
 
 ```
+kubectl apply -f deployment_bittorrent.yaml -f service_transmission.yaml
 kubectl logs <bittorrent pod name> -c airvpn
 kubectl logs <bittorrent pod name> -c transmission
 kubectl logs <bittorrent pod name> -c transmission-liveness-server
@@ -101,4 +102,4 @@ Next, edit `service_transmission.yaml` and change to your desired NodePort port.
 
 Then, run `kubectl apply -f configmap_nginx.yaml -f deployment_nginx.yaml -f service_nginx.yaml`.
 
-You should now be able to access your Transmission RPC at <node IP>:<nodeport port>.
+You should now be able to access your Transmission RPC at `<node IP>:<nodeport port>`.
