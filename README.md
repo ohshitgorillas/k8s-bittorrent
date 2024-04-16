@@ -69,7 +69,7 @@ docker build -t transmission-liveness-server .
 docker tag transmission-liveness-server <registry IP:port>/transmission-liveness-server
 docker push <registry IP:port>/transmission-liveness-server
 ```
-
+To prevent Keel from generating errors regarding your self-signed certificates, copy the `/opt/certs/registry.crt` and `/opt/certs/registry.key` from the BitTorrent node to `/opt/certs` on Keel's node, then update your CA certificates (for Ubuntu Server, run `sudo update-ca-certificates`).
 
 5. Prepare the main manifest for deployment by editing `deployment.yaml`. Specifically, pay attention to:
 * node name
