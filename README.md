@@ -45,7 +45,7 @@ These rules allow your LAN and Kubernetes subnets to communicate with the Transm
 Take special note of the size of the 10.0.0.0 subnet. For example, if you are using Cilium with the default CIDR of 10.0.0.0/8, a subnet size of /8 is appropriate. In my case, my LAN subnet is 10.0.0.0/24, but the AirVPN DNS server is located at 10.145.0.1, so using /8 for the PostUp/PreDown rules might result in DNS leakage.
 
 
-3. Determine your username, password, and forwarded peer port from your VPN provider and convert the values to base64:
+3. Determine your username and password for Transmission, and get your forwarded peer port from your VPN provider. Convert the values to base64:
 
 ```
 ➜  ~ echo admin | base64
