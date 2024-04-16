@@ -25,7 +25,7 @@ spec:
         - name: net.ipv6.conf.all.forwarding
           value: "1"
       containers:
-      - name: airvpn
+      - name: wireguard
         image: lscr.io/linuxserver/wireguard:latest
         livenessProbe:
           exec:
@@ -45,7 +45,7 @@ spec:
         - name: TZ
           value: America/Los_Angeles
         volumeMounts:
-        - name: airvpn-config
+        - name: wireguard-config
           mountPath: /etc/wireguard/
         - name: lib-modules
           mountPath: /lib/modules
@@ -120,7 +120,7 @@ spec:
       - name: transmission-config
         hostPath:
           path: /srv/bittorrent/transmission/config
-      - name: airvpn-config
+      - name: wireguard-config
         hostPath: 
           path: /srv/bittorrent/airvpn
       - name: lib-modules
