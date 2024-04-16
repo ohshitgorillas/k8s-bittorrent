@@ -78,7 +78,7 @@ docker push <registry IP:port>/transmission-liveness-server
 * mounting nginx-logs is optional for fail2ban integration
 
 
-6. Next we'll set the bind addresses in Transmission to prevent data leakage outside of wg0, then deploy the pod. If you already have a Transmission config file from a previous setup, open it. Otherwise, execute `kubectl apply -f deployment.yaml` to generate the file `transmission/config/settings.json`, then `kubectl delete deployment bittorrent` to kill the pod and allow editing.
+6. Next we'll set the bind addresses in Transmission to prevent data leakage outside of wg0, then deploy the pod. If you already have a Transmission config file from a previous setup, open it. Otherwise, execute `kubectl apply -f deployment.yaml` to generate the file `transmission/config/settings.json`, then `kubectl delete deployment bittorrent` to kill the pod (`settings.json` cannot be edited while Transmission is live). 
 
 Locate the bind address settings:
 ```
