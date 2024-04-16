@@ -93,3 +93,5 @@ kubectl logs <bittorrent pod name> -c transmission-liveness-server
 Next, edit `service_transmission.yaml` and change to your desired NodePort port. 
 
 Then, run `kubectl apply -f configmap_nginx.yaml -f deployment_nginx.yaml -f service_nginx.yaml`.
+
+You should now be able to access your Transmission RPC at <node IP>:<nodeport port>.
