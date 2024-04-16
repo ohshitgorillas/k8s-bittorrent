@@ -31,6 +31,8 @@ nodeRegistration:
   kubeletExtraArgs:
     allowed-unsafe-sysctls: "net.ipv4.conf.all.src_valid_mark,net.ipv6.conf.all.forwarding"
 ```
+
+
 2. Retrieve a WireGuard configuration file from your VPN provider, name it `wg0.conf` and, at the end of the `[Interface]` section, add the following:
 
 ```
@@ -41,6 +43,7 @@ PreDown = HOMENET=192.168.0.0/16; HOMENET2=10.0.0.0/24; HOMENET3=172.16.0.0/12; 
 These rules allow your LAN and Kubernetes subnets to communicate with the Transmission RPC port while blocking all other traffic not bound for the WireGuard tunnel, wg0.
 
 Take special note of the size of the 10.0.0.0 subnet. For example, if you are using Cilium with the default CIDR of 10.0.0.0/8, a subnet size of /8 is appropriate. In my case, my LAN subnet is 10.0.0.0/24, but the AirVPN DNS server is located at 10.145.0.1, so using /8 for the PostUp/PreDown rules might result in DNS leakage.
+
 
 3. Determine your username, password, and forwarded peer port from your VPN provider and convert the values to base64:
 
@@ -55,6 +58,7 @@ NDIwNjkK
 
 Enter the base64 values into `secrets_transmission.yaml` and run `kubectl apply -f secrets_transmission.yaml`. 
 
+
 4. To build the Transmission liveness server into your private registry, cd into the `liveserver` directory and execute the following commands:
 
 ```
@@ -64,11 +68,13 @@ docker tag transmission-liveness-server <registry IP:port>/transmission-liveness
 docker push <registry IP:port>/transmission-liveness-server
 ```
 
+
 5. Edit the deployment manifest `deployment_bittorrent.yaml`. Specifically, pay attention to:
 * node name
 * timezone
 * registry node IP:port in transmission-liveness-server image
 * volume host paths (leave /lib/modules but edit the rest for your system)
+
 
 6. If you already have a Transmission config file from a previous setup, open it. Otherwise, execute `kubectl apply -f deployment_bittorrent.yaml` then `kubectl delete deployment bittorrent` and edit the file `transmission/config/settings.json`. Locate the bind address settings:
 
@@ -84,6 +90,7 @@ kubectl logs <bittorrent pod name> -c airvpn
 kubectl logs <bittorrent pod name> -c transmission
 kubectl logs <bittorrent pod name> -c transmission-liveness-server
 ```
+
 
 7. Edit the deployment manifest `deployment_nginx.yaml`. Specifically, pay attention to:
 * node name
