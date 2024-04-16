@@ -3,7 +3,7 @@
 The following are instructions for setting up BitTorrent in Kubernetes. This project uses
 * A simple WireGuard container for VPN encryption
 * Transmission, as it has the most available GUI programs for remote access.
-* nginx to provide encrypted remote access
+* nginx to provide encrypted remote access from around the world
 * Keel for auto-updates
 * Liveness probes to keep both containers running hands-free
 * Full IPv6 support
@@ -87,7 +87,14 @@ Locate the bind address settings:
     "bind-address-ipv6": "::",
 ```
 
-Enter the `Addresses` from the `[Interfaces]` section of your WireGuard config. 
+Enter the `Addresses` from the `[Interfaces]` section of your WireGuard config.
+
+You may also want to enable and configure these to prevent brute force intrusion attempts:
+
+```
+    "anti-brute-force-enabled": false,
+    "anti-brute-force-threshold": 100,
+```
 
 Finally, bring the pod back up, start the nginx NodePort service, and check for errors with the following commands: 
 
@@ -100,3 +107,5 @@ kubectl logs <bittorrent pod name> bittorrent-nginx
 ```
 
 You should now be able to access your Transmission RPC at `https://<node IP>:<NodePort port>` and, once the port is forwarded on your router, `https://your.domain:<NodePort port>`.
+
+Last but not least, I HIGHLY recommend integrating nginx logs into fail2ban (https://github.com/fail2ban/fail2ban) to prevent brute force intrusion attempts.
