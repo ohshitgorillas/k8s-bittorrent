@@ -6,6 +6,7 @@ The following are instructions for setting up BitTorrent in Kubernetes. This pro
 * nginx to provide encrypted remote access
 * Keel for auto-updates
 * Liveness probes to keep both containers running hands-free
+* Full IPv6 support
 
 Prerequisites:
 * VPN provider that supports WireGuard, and a forwarded port
@@ -16,7 +17,7 @@ Prerequisites:
 
 # Instructions
 
-1. Create, or re-create, the desired node with the unsafe sysctl `net.ipv4.conf.all.src_valid_mark` enabled (and, if you want IPv6, `net.ipv6.conf.all.forwarding`). I use kubeadm, here's an example join config file:
+1. Create, or re-create, the desired node with the unsafe sysctl `net.ipv4.conf.all.src_valid_mark` enabled (and, optionally, `net.ipv6.conf.all.forwarding`). I use kubeadm, here's an example join config file:
 
 ```
 apiVersion: kubeadm.k8s.io/v1beta3
@@ -42,10 +43,10 @@ PreDown = HOMENET=192.168.0.0/16; HOMENET2=10.0.0.0/24; HOMENET3=172.16.0.0/12; 
 ```
 These rules allow your LAN and Kubernetes subnets to communicate with the Transmission RPC port while blocking all other traffic not bound for the WireGuard tunnel, wg0.
 
-Take special note of the size of the 10.0.0.0 subnet. For example, if you are using Cilium with the default CIDR of 10.0.0.0/8, a subnet size of /8 is appropriate. In my case, my LAN subnet is 10.0.0.0/24, but the AirVPN DNS server is located at 10.145.0.1, so using /8 for the PostUp/PreDown rules might result in DNS leakage.
+IMPORTANT: Adjust subnet sizes in the rules to match your LAN and Kubernetes network ranges. For example, 10.0.0.0/8 might be appropriate for some cases, however, I use AirVPN for which the DNS server is located at 10.128.0.1, so using 10.0.0.0/8 might result in DNS leakage.
 
 
-3. Determine your username and password for Transmission, and get your forwarded peer port from your VPN provider. Convert the values to base64:
+3. Encode your credentials and the forwarded port from your VPN provider into base64:
 
 ```
 ➜  ~ echo admin | base64
@@ -69,21 +70,22 @@ docker push <registry IP:port>/transmission-liveness-server
 ```
 
 
-5. Edit the deployment manifest `deployment_bittorrent.yaml`. Specifically, pay attention to:
+5. Prepare the main manifest for deployment by editing `deployment_bittorrent.yaml`. Specifically, pay attention to:
 * node name
 * timezone
 * `<registry node IP>:<port>` in transmission-liveness-server image
-* volume host paths (leave `/lib/modules` but edit the rest for your system)
+* volume host paths (leave `/lib/modules`)
 
 
-6. If you already have a Transmission config file from a previous setup, open it. Otherwise, execute `kubectl apply -f deployment_bittorrent.yaml` then `kubectl delete deployment bittorrent` and edit the file `transmission/config/settings.json`. Locate the bind address settings:
+6. Next we'll set the bind addresses in Transmission to prevent it from leaking data outside of wg0 (except RPC), then deploy the main pod. If you already have a Transmission config file from a previous setup, open it. Otherwise, execute `kubectl apply -f deployment_bittorrent.yaml` to generate the file, then `kubectl delete deployment bittorrent` to kill the pod and allow for editing the file `transmission/config/settings.json`.
 
+Locate the bind address settings:
 ```
     "bind-address-ipv4": "0.0.0.0",
     "bind-address-ipv6": "::",
 ```
 
-Enter the addresses from the `[Interfaces]` section of your WireGuard config. This prevents Transmission from communicating with the internet outside of your WireGuard tunnel. Bring the pod back up, and start its RPC port service, then check for errors with the following commands: 
+Enter the addresses from the `[Interfaces]` section of your WireGuard config. Bring the pod back up, start its RPC service, and check for errors with the following commands: 
 
 ```
 kubectl apply -f deployment_bittorrent.yaml -f service_transmission.yaml
@@ -95,8 +97,8 @@ kubectl logs <bittorrent pod name> -c transmission-liveness-server
 
 7. Edit the deployment manifest `deployment_nginx.yaml`. Specifically, pay attention to:
 * node name
-* whether you want to mount nginx-logs or not for fail2ban integration
 * volume host paths
+* mounting `nginx-logs` is optional for fail2ban integration
 
 Next, edit `service_transmission.yaml` and change to your desired NodePort port. 
 
