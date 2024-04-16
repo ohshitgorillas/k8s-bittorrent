@@ -1,0 +1,140 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bittorrent 
+  annotations:
+    keel.sh/policy: all
+    keel.sh/trigger: poll
+    keel.sh/pollSchedule: "@hourly"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bittorrent
+  template:
+    metadata:
+      labels:
+        app: bittorrent
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: obsidiana
+      securityContext:
+        sysctls:
+        - name: net.ipv4.conf.all.src_valid_mark
+          value: "1"
+        - name: net.ipv6.conf.all.forwarding
+          value: "1"
+      containers:
+      - name: airvpn
+        image: lscr.io/linuxserver/wireguard:latest
+        livenessProbe:
+          exec:
+            command:
+              - /bin/sh
+              - -c
+              - "wg show | grep -q transfer"
+        securityContext:
+          privileged: true
+          capabilities:
+            add: ["NET_ADMIN"]
+        env:
+        - name: PUID
+          value: "1000"
+        - name: PGID
+          value: "1000"
+        - name: TZ
+          value: America/Los_Angeles
+        volumeMounts:
+        - name: airvpn-config
+          mountPath: /etc/wireguard/
+        - name: lib-modules
+          mountPath: /lib/modules
+          readOnly: true
+      - name: transmission
+        image: lscr.io/linuxserver/transmission:latest
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8000
+        ports:
+        - containerPort: 9091
+          protocol: TCP
+        env:
+        - name: PUID
+          value: "1000"
+        - name: PGID
+          value: "1000"
+        - name: TZ
+          value: America/Los_Angeles
+        - name: USER
+          valueFrom:
+            secretKeyRef:
+              name: transmission-secrets
+              key: USER
+        - name: PASS
+          valueFrom:
+            secretKeyRef:
+              name: transmission-secrets
+              key: PASS
+        - name: PEERPORT
+          valueFrom:
+            secretKeyRef:
+              name: transmission-secrets
+              key: PEERPORT
+        volumeMounts:
+        - name: transmission-config
+          mountPath: /config
+        - name: downloads
+          mountPath: /downloads
+      - name: bittorrent-nginx
+        image: nginx:latest
+        ports:
+          - containerPort: 80
+            protocol: TCP
+        volumeMounts:
+          - name: nginx-config
+            mountPath: /etc/nginx/nginx.conf
+            subPath: nginx.conf
+          - name: ssl-certs
+            mountPath: /config/keys
+            readOnly: true
+          - name: nginx-logs
+            mountPath: /var/log/nginx
+      - name: transmission-liveness-server
+        image: 10.0.0.238:31320/transmission-liveness-server
+        ports:
+        - containerPort: 8000
+          protocol: TCP
+        env:
+        - name: USER
+          valueFrom:
+            secretKeyRef:
+              name: transmission-secrets
+              key: USER
+        - name: PASS
+          valueFrom:
+            secretKeyRef:
+              name: transmission-secrets
+              key: PASS
+      volumes:
+      - name: transmission-config
+        hostPath:
+          path: /srv/bittorrent/transmission/config
+      - name: airvpn-config
+        hostPath: 
+          path: /srv/bittorrent/airvpn
+      - name: lib-modules
+        hostPath:
+          path: /lib/modules 
+      - name: downloads 
+        hostPath:
+          path: /downloads
+      - name: nginx-config
+        configMap:
+          name: bittorrent-nginx-configmap
+      - name: ssl-certs
+        hostPath:
+          path: /srv/bittorrent/nginx/keys
+      - name: nginx-logs
+        hostPath:
+          path: /srv/bittorrent/nginx/log
