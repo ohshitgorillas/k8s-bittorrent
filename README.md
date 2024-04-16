@@ -18,7 +18,7 @@ Prerequisites:
 
 # Instructions
 
-1. Create, or re-create, the desired node with the unsafe sysctl `net.ipv4.conf.all.src_valid_mark` enabled (and, optionally, `net.ipv6.conf.all.forwarding`). I use kubeadm, here's an example join config file:
+1. First, we need to enable unsafe sysctls, which needs to be set at the time the node is created. Create, or re-create, the desired node with the unsafe sysctl `net.ipv4.conf.all.src_valid_mark` enabled (and, optionally, `net.ipv6.conf.all.forwarding`). I use kubeadm; here's an example join config file:
 
 ```
 apiVersion: kubeadm.k8s.io/v1beta3
