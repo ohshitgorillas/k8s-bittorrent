@@ -12,7 +12,7 @@ Prerequisites:
 * Kubernetes cluster with the ability to set unsafe sysctls on the node
 * wireguard-tools installed on the node's host system
 * Keel (https://keel.sh/docs/1)
-* A private k8s registry hold Transmission's liveness probe for Transmission (https://www.linuxtechi.com/setup-private-docker-registry-kubernetes/)
+* A private k8s registry for Transmission's liveness probe (https://www.linuxtechi.com/setup-private-docker-registry-kubernetes/)
 
 # Instructions
 
