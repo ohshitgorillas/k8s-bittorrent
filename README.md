@@ -70,14 +70,15 @@ docker push <registry IP:port>/transmission-liveness-server
 ```
 
 
-5. Prepare the main manifest for deployment by editing `deployment_bittorrent.yaml`. Specifically, pay attention to:
+5. Prepare the main manifest for deployment by editing `deployment.yaml`. Specifically, pay attention to:
 * node name
 * timezone
 * `<registry node IP>:<port>` in transmission-liveness-server image
 * volume host paths (leave `/lib/modules`)
+* mounting nginx-logs is optional for fail2ban integration
 
 
-6. Next we'll set the bind addresses in Transmission to prevent data leakage outside of wg0, then deploy the pod. If you already have a Transmission config file from a previous setup, open it. Otherwise, execute `kubectl apply -f deployment_bittorrent.yaml` to generate the file `transmission/config/settings.json`, then `kubectl delete deployment bittorrent` to kill the pod and allow editing.
+6. Next we'll set the bind addresses in Transmission to prevent data leakage outside of wg0, then deploy the pod. If you already have a Transmission config file from a previous setup, open it. Otherwise, execute `kubectl apply -f deployment.yaml` to generate the file `transmission/config/settings.json`, then `kubectl delete deployment bittorrent` to kill the pod and allow editing.
 
 Locate the bind address settings:
 ```
@@ -85,24 +86,16 @@ Locate the bind address settings:
     "bind-address-ipv6": "::",
 ```
 
-Enter the `Addresses` from the `[Interfaces]` section of your WireGuard config. Bring the pod back up, start its RPC service, and check for errors with the following commands: 
+Enter the `Addresses` from the `[Interfaces]` section of your WireGuard config. 
+
+Finally, bring the pod back up, start the nginx NodePort service, and check for errors with the following commands: 
 
 ```
-kubectl apply -f deployment.yaml -f service_transmission.yaml
+kubectl apply -f deployment.yaml -f service_nginx.yaml
 kubectl logs <bittorrent pod name> wireguard
 kubectl logs <bittorrent pod name> transmission
 kubectl logs <bittorrent pod name> transmission-liveness-server
 kubectl logs <bittorrent pod name> bittorrent-nginx
 ```
 
-
-7. Edit the deployment manifest `deployment_nginx.yaml`. Specifically, pay attention to:
-* node name
-* volume host paths
-* mounting `nginx-logs` is optional for fail2ban integration
-
-Next, edit `service_transmission.yaml` and change to your desired NodePort port. 
-
-Then, run `kubectl apply -f configmap_nginx.yaml -f deployment_nginx.yaml -f service_nginx.yaml`.
-
-You should now be able to access your Transmission RPC at `<node IP>:<nodeport port>`.
+You should now be able to access your Transmission RPC at `https://<node IP>:<NodePort port>` or `https://yourdomain.com:<NodePort port>`.
