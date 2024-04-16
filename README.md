@@ -10,6 +10,7 @@ The following are instructions for setting up BitTorrent in Kubernetes. This pro
 
 Prerequisites:
 * VPN provider that supports WireGuard, and a forwarded port
+* A registered domain, DDNS records linking it to your node's IP, and valid SSL certs
 * A Kubernetes cluster with the ability to set unsafe sysctls on the node
 * `wireguard-tools` installed on the node's host system
 * Keel (https://keel.sh/docs/1)
@@ -98,4 +99,4 @@ kubectl logs <bittorrent pod name> transmission-liveness-server
 kubectl logs <bittorrent pod name> bittorrent-nginx
 ```
 
-You should now be able to access your Transmission RPC at `https://<node IP>:<NodePort port>` or `https://yourdomain.com:<NodePort port>`.
+You should now be able to access your Transmission RPC at `https://<node IP>:<NodePort port>` and, once the port is forwarded on your router, `https://your.domain:<NodePort port>`.
