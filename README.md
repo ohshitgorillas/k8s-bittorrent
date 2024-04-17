@@ -79,15 +79,9 @@ To prevent Keel from generating errors regarding your self-signed certificates, 
 * mounting nginx-logs is optional for fail2ban integration
 
 
-6. Next we'll set the bind addresses in Transmission to prevent data leakage outside of wg0, then deploy the pod. If you already have a Transmission config file from a previous setup, open it. Otherwise, execute `kubectl apply -f deployment.yaml` to generate the file `transmission/config/settings.json`, then `kubectl delete deployment bittorrent` to kill the pod (`settings.json` cannot be edited while Transmission is live). 
+6. Next we'll set the bind addresses in Transmission to prevent data leakage outside of wg0, then deploy the pod. If you already have a Transmission config file from a previous setup, open it. Otherwise, execute `kubectl apply -f deployment.yaml` to generate the file `transmission/config/settings.json`, then `kubectl delete deployment bittorrent` to kill the pod and edit the file (`settings.json` cannot be edited while Transmission is live). 
 
-Locate the bind address settings:
-```
-    "bind-address-ipv4": "0.0.0.0",
-    "bind-address-ipv6": "::",
-```
-
-Enter the `Addresses` from the `[Interfaces]` section of your WireGuard config.
+Locate the bind address settings, and enter the `Addresses` from the `[Interfaces]` section of your WireGuard config.
 
 Finally, bring the pod back up, start the nginx NodePort service, and check for errors with the following commands: 
 
